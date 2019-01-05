@@ -119,7 +119,7 @@ Starting from the bottom of the file we see the `init!` function that setup the 
 
 For **React** developers the code should be pretty familiar:
 
-```
+```clojure
 (defn mount-root []
   (reagent/render [current-page] (.getElementById js/document "app")))
 ```
@@ -150,7 +150,7 @@ We start from the bottom again working our way up. The `current-page` function c
 
 Remove these and you will end up with a function looking like this:
 
-```
+```clojure
 (defn current-page []
   (fn []
     (let [page (:current-page (session/get :route))]
@@ -164,7 +164,7 @@ We remove the "about" page: the reference in `page-for`, the `about-page` page c
 
 In the `home-page` page component we remove the "borken link", the link to "items" and we change the title to "Monumental".
 
-```
+```clojure
 (defn home-page []
   (fn []
     [:span.main
@@ -178,7 +178,7 @@ You can also remove the "item-page" and "items-page" along with their references
 Right at the top we see the import of `atom` - Atoms are used to [manage state](http://reagent-project.github.io/docs/master/ManagingState.html) in Reagent applications.
 
 Declare an atom containing a map with `monuments` and the current `search`
-```
+```clojure
 (defonce state (atom {:monuments []
                   :search ""}))
 ```
@@ -190,7 +190,7 @@ Declare an atom containing a map with `monuments` and the current `search`
 
 We need a search component to search for monuments so let's add it to the home page component:
 
-```
+```clojure
 (defn home-page []
   (fn []
     [:span.main
@@ -200,14 +200,14 @@ We need a search component to search for monuments so let's add it to the home p
 
 **Figwheel** now give us a compile warning in the browser indicating that the variable is not declared. Let's fix that.
 
-```
+```clojure
 (defn <search> []
   [:div [:input {:placeholder "Search by region ..."}]])
 ```
 
 But in order for it to do something we bind the onchange event to fetch monuments.
 
-```
+```clojure
 (defn <search> []
   [:div [:input
          {:placeholder "Search by region ..."
@@ -217,20 +217,20 @@ But in order for it to do something we bind the onchange event to fetch monument
 The `#(...)` is short hand for an anonymous function (`(fn [e] e)`) and the `%` represents the parameter - a javascript `event` -
 and we access the value of the event via the javascript interoperability. The thread-first macro `->` makes accessing the target value more readable.
 Compare the above with the equivalent expression without using the thread-first macro:
-```
+```clojure
 (.value (.-target (%)))
 ```
 
 Now we get a compiler error as the `fetch-monuments` function is not yet defined.
 
-```
+```clojure
 (defn fetch-monuments [region]
   (swap! state assoc :search region))
 ```
 
 We associate the current search to the `:search` keyword in the state atom. Finally we associate the search state to the inputs' value:
 
-```
+```clojure
 (defn <search> []
   [:div [:input
          {:placeholder "Search by region ..."
@@ -240,7 +240,7 @@ We associate the current search to the `:search` keyword in the state atom. Fina
 
 We can make that input a little prettier by adding some styling in `resources/public/site.css`
 
-```
+```css
 input {
   width: 200px;
   padding: 10px;
@@ -265,13 +265,13 @@ Let's try it out while in the REPL.
 
 First import the module and the `GET` function:
 
-```
+```clojure
 app:cljs.user=> (require '[ajax.core :refer [GET]])
 ```
 
 Then we can use the `GET` function:
 
-```
+```clojure
 app:cljs.user=> (GET "http://localhost:3000/api/search" {:params {:region "P"}
            #_=>                                          :handler #(.log js/console (str %))})
 ```
@@ -283,7 +283,7 @@ Open up your navigator's devtools and you should see the results of the `GET` in
 Furthermore we will hint that the response type is json and that we want `keywords` instead of the JSON string keys in the data -
 this is a common data format to work with in Clojure.
 
-```
+```clojure
 app:cljs.user=> (GET "http://localhost:3000/api/search" {:params {:region "P"}
            #_=>                                          :response-format :json
            #_=>                                          :keywords? true
@@ -292,13 +292,13 @@ app:cljs.user=> (GET "http://localhost:3000/api/search" {:params {:region "P"}
 
 Verify in the navigator console and you should output similar to below:
 
-```
+```edn
 [{:AFFE "", :STAT "Propriété d'une personne privée", :REF "PA00109152" ...]
 ```
 
 Since this code is now working we'll put it in the `fetch-monuments` function but instead of logging the response we put it in the state atom.
 
-```
+```clojure
 (defn fetch-monuments [region]
   (swap! state assoc :search region)
   (GET "http://localhost:3000/api/search" {:params {:region region}
@@ -313,7 +313,7 @@ With the monuments fetched we can focus on listing them.
 
 We define 2 new components
 
-```
+```clojure
 (defn <monument-line> [monument]
   (let [current-name (:TICO monument)
         monument-ref (:REF monument)
@@ -332,7 +332,7 @@ The `<monument-line>` component first extract variables from the `monument` and 
 
 We then reference the `<monuments>` component from the home page component
 
-```
+```clojure
 (defn home-page []
   (fn []
     [:span.main
@@ -343,13 +343,14 @@ We then reference the `<monuments>` component from the home page component
 
 You will notice that the links aren't working. This is because we haven't declared the `monument` routes. Let's fix that:
 
-```
+```clojure
 (def router
   (reitit/router
    [["/" :index]
     ["/monuments/:monument-id" :monument]]))
 
 ...
+
 (defn page-for [route]
   (case route
     :index #'home-page
@@ -359,7 +360,7 @@ You will notice that the links aren't working. This is because we haven't declar
 
 And now on to the `monument-page`:
 
-```
+```clojure
 ...
 
 (defn monument-matching-ref [monuments ref]
@@ -395,8 +396,10 @@ The `<monument>` component extract variables from the monument and render the in
 
 To make things a little more interesting we can display a photo of the monument.
 
-```
-[clojure.string :refer [lower-case]] ;; Don't forget this import :)
+```clojure
+
+;; Add the "lower-case" function in the require vector
+[clojure.string :refer [lower-case]]
 
 
 (defn <monument> [monument]
@@ -416,7 +419,7 @@ To make things a little more interesting we can display a photo of the monument.
 And here's some CSS to make the image fit better
 
 `resources/public/css/site.css`
-```
+```css
 img {
   height: 60%;
   width: 60%;
@@ -438,4 +441,5 @@ Ex. `> port=9000 java -jar target/monumental-front.jar`
 
 Congratulations, you've built a web application for looking up French monuments with ClojureScript and Reagent!
 
-We are of course only scratching the surface of what is possible using Clojure but I hope you have now got an idea of what you can achieve with relatively little code. And that you will want to continue to learn this programming language.
+We are of course only scratching the surface of what is possible using Clojure(Script) but I hope you have
+now got an idea of what you can achieve with relatively little code. And that you will want to continue to learn this programming language.
