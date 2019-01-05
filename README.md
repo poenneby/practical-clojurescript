@@ -8,19 +8,27 @@ This is a guided hands-on which let you experience building a simple front end t
 
 - You need Java 8 or above installed and `JAVA_HOME` set.
 
-- Install Leiningen: https://leiningen.org/#install
+- Install Leiningen: https://leiningen.org/#install or `brew install leiningen`
 
 ### Editor/IDE
 - For Visual Studio Code users I recommend installing the [Calva plugin](https://marketplace.visualstudio.com/items?itemName=cospaia.clojure4vscode) - setup instructions [here](https://github.com/BetterThanTomorrow/calva/wiki/Getting-Started#dependencies)
 
 - If you use IntelliJ I recommend installing the [Cursive plugin](https://plugins.jetbrains.com/plugin/8090-cursive) - and there is a free [non-commercial licence](https://cursive-ide.com/buy.html) available for hacking and open source work.
 
+- Vim users have a number of useful plugins
+  - [kien/rainbow_parentheses.vim](https://github.com/kien/rainbow_parentheses.vim)
+  - [guns/vim-clojure-static](https://github.com/guns/vim-clojure-static)
+  - [tpope/vim-fireplace](https://github.com/tpope/vim-fireplace)
+  - [vim-scripts/paredit.vim](https://github.com/vim-scripts/paredit.vim)
+
+- Emacs users can have a look at this
+  - http://clojure-doc.org/articles/tutorials/emacs.html
 
 ## The application
 
 Let's imagine we've been asked to build a website that expose information related to French monuments.
 
-Since we have already built the [backend](https://github.com/poenneby/practical-clojure/tree/solution), all that is left for us to do is building the front end and for that we will use ClojureScript.
+Since we have already built the [backend](https://github.com/poenneby/practical-clojure/tree/solution), "all" that is left for us to do is building the front end and for that we will use ClojureScript.
 
 After a bit of discussion with our PO we agree on starting out simple with
 an input field for searching, and that we can show more information about each monument found.
