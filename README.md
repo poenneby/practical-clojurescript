@@ -20,20 +20,21 @@ This is a guided hands-on which let you experience building a simple front end t
 
 Let's imagine we've been asked to build a website that expose information related to French monuments.
 
-All that is left for us to do is building the front end and for that we will use ClojureScript.
+Since we have already built the [backend](https://github.com/poenneby/practical-clojure/tree/solution), all that is left for us to do is building the front end and for that we will use ClojureScript.
 
-After a bit of discussion with the PO we agree on starting out simple with
-an input field for searching and that we can show more information about each monument found.
+After a bit of discussion with our PO we agree on starting out simple with
+an input field for searching, and that we can show more information about each monument found.
 
-* In the [practical clojure](https://github.com/poenneby/practical-clojure/tree/solution) tutorial we built the REST API that allow searching for monuments by region.
+*In the [practical clojure](https://github.com/poenneby/practical-clojure/tree/solution) tutorial we built the REST API that allow searching for monuments by region.*
 
-## Start the API
+## Start the backend API
 
 Go ahead and clone [practical clojure solution](https://github.com/poenneby/practical-clojure/tree/solution) and run it
 
 ```
 git clone https://github.com/poenneby/practical-clojure.git
 git checkout solution
+cd practical-clojure/monumental
 lein run server
 ```
 
@@ -42,7 +43,7 @@ lein run server
 The Clojure community has been quick to see the potential in React and there exist a few different wrappers libraries.
 By far the most popular is [Reagent](http://reagent-project.github.io/) which allows you to declare your components using [Hiccup](http://weavejester.github.io/hiccup/)
 
-The Reagent project conveniently provide a [Leiningen plugin](https://github.com/reagent-project/reagent-template) and we can generate a new project like this.
+The Reagent project conveniently provide a [Leiningen template](https://github.com/reagent-project/reagent-template) and we can generate a new project like this.
 
 `lein new reagent monumental-front`
 
@@ -135,9 +136,9 @@ The var quote form `#'home-page` is short for `(var home-page)` which expands in
 
 Further up we have some pages declared as functions using **Hiccup**. All the provided pages return a function which is optional.
 You could just return a vector directly and this would translate to the `render` function of a React component.
-However if you want to do stuff like setting up initial state or fetching data prior to rendering the component you do that in the first function.
+However if you want to do stuff like setting up initial state or fetching data prior to rendering the component you do that in the top level function.
 
-Finally at the top we have the declaration of routes. The Reagent template is using [reitit](https://metosin.github.io/reitit/) which claims to be fastest routing library for Clojure(Script).
+Finally at the top we have the declaration of routes. The Reagent template is using [reitit](https://metosin.github.io/reitit/) which claims to be a [faster](https://metosin.github.io/reitit/performance.html) routing library for Clojure(Script).
 
 An added advantage is that routes can be shared between server and client.
 
@@ -157,7 +158,9 @@ Remove these and you will end up with a function looking like this:
        [page]])))
 ```
 
-We remove the "about" page: reference in `page-for`, the `about-page` page component and the route declarations at the top.
+We remove the "about" page: the reference in `page-for`, the `about-page` page component and the route declarations at the top.
+
+(Remember to keep an eye on the rendered page to make sure you didn't remove too much code causing the page to no longer compile!)
 
 In the `home-page` page component we remove the "borken link", the link to "items" and we change the title to "Monumental".
 
@@ -168,11 +171,11 @@ In the `home-page` page component we remove the "borken link", the link to "item
      [:h1 "Monumental"]]))
 ```
 
-We will keep the "item-page" and "items-page" for now as they will serve as examples for the rest.
+You can also remove the "item-page" and "items-page" along with their references in the routes.
 
 ## Introducing state
 
-Right at the top we see the inclusion of `atom` - Atoms are used to [manage state](http://reagent-project.github.io/docs/master/ManagingState.html) in Reagent applications.
+Right at the top we see the import of `atom` - Atoms are used to [manage state](http://reagent-project.github.io/docs/master/ManagingState.html) in Reagent applications.
 
 Declare an atom containing a map with `monuments` and the current `search`
 ```
@@ -185,7 +188,7 @@ Declare an atom containing a map with `monuments` and the current `search`
 
 ## The search component
 
-We need a search component to search monuments so let's add it to the home page component:
+We need a search component to search for monuments so let's add it to the home page component:
 
 ```
 (defn home-page []
@@ -212,8 +215,8 @@ But in order for it to do something we bind the onchange event to fetch monument
 ```
 
 The `#(...)` is short hand for an anonymous function (`(fn [e] e)`) and the `%` represents the parameter - a javascript `event` -
-and we access the value of the event via the javascript interoperability. The thread-first macro `->` makes the access to the target value more readable.
-Compare the above with the equivalent expression without the thread-first macro:
+and we access the value of the event via the javascript interoperability. The thread-first macro `->` makes accessing the target value more readable.
+Compare the above with the equivalent expression without using the thread-first macro:
 ```
 (.value (.-target (%)))
 ```
@@ -254,11 +257,13 @@ For that we need to add a dependency to `project.clj`
 Locate the `:dependencies` key and add the following dependency at the end of the vector:
 `[cljs-ajax "0.8.0"]`
 
-When modifying the project configuration we need to restart the REPL so `Ctrl+D` to quit and start with `lein figwheel`
+When modifying the project configuration we need to restart the REPL so quit with `Ctrl+D` and start it again with `lein figwheel`
 
-`cljs-ajax` exposes different functions representing HTTP methods such as `GET` and we can try it out while in the REPL.
+**cljs-ajax` is a simple Ajax client for ClojureScript and Clojure and it exposes different functions representing HTTP methods such as `GET` and `POST`.
 
-First import the module:
+Let's try it out while in the REPL.
+
+First import the module and the `GET` function:
 
 ```
 app:cljs.user=> (require '[ajax.core :refer [GET]])
@@ -271,11 +276,12 @@ app:cljs.user=> (GET "http://localhost:3000/api/search" {:params {:region "P"}
            #_=>                                          :handler #(.log js/console (str %))})
 ```
 
-We call the search endpoint with a parameter `region` and the handler function logs to the console.
+We call the search endpoint with a query parameter `region` and the handler function logs to the console.
 
-Open up your navigator's devtools and you should see the results of our `GET` in the console.
+Open up your navigator's devtools and you should see the results of the `GET` in the console.
 
-We will also hint that the response type is json and that we want `keywords` instead of the JSON string keys in the data
+Furthermore we will hint that the response type is json and that we want `keywords` instead of the JSON string keys in the data -
+this is a common data format to work with in Clojure.
 
 ```
 app:cljs.user=> (GET "http://localhost:3000/api/search" {:params {:region "P"}
@@ -318,10 +324,9 @@ We define 2 new components
 (defn <monuments> [] [:div.monuments
                       [:ul
                        (for [monument (:monuments @state)] (<monument-line> monument))]])
-
 ```
 
-The `<monuments>` component iterate over the monuments in state using for comprehension. For each monument we render a `<monument-line>`.
+The `<monuments>` component iterate over the monuments in the state atom using "for comprehension". For each monument we render a `<monument-line>`.
 
 The `<monument-line>` component first extract variables from the `monument` and then generates a list item with a link to more info.
 
@@ -345,7 +350,6 @@ You will notice that the links aren't working. This is because we haven't declar
     ["/monuments/:monument-id" :monument]]))
 
 ...
-
 (defn page-for [route]
   (case route
     :index #'home-page
@@ -356,6 +360,7 @@ You will notice that the links aren't working. This is because we haven't declar
 And now on to the `monument-page`:
 
 ```
+...
 
 (defn monument-matching-ref [monuments ref]
   (filter (fn [monument] (= ref (:REF monument))) monuments))
@@ -384,7 +389,7 @@ And now on to the `monument-page`:
 
 ```
 
-In `monument-page` we get the id of the monument from the url. This id is then used to filter out the `first` monument in the state matching the reference.
+In `monument-page` we get the id of the monument from the url. This id is then used to filter out the `first` monument matching the reference.
 
 The `<monument>` component extract variables from the monument and render the information.
 
@@ -410,6 +415,7 @@ To make things a little more interesting we can display a photo of the monument.
 
 And here's some CSS to make the image fit better
 
+`resources/public/css/site.css`
 ```
 img {
   height: 60%;
@@ -426,7 +432,7 @@ The uberjar contains all the application's dependencies and you can run it like 
 
 `java -jar <path to generated jar>`
 
-Ex. `> java -jar target/monumental-0.0.1-SNAPSHOT-standalone.jar`
+Ex. `> port=9000 java -jar target/monumental-front.jar`
 
 ## Conclusion
 
