@@ -41,9 +41,10 @@ Go ahead and clone [practical clojure solution](https://github.com/poenneby/prac
 
 ```
 git clone https://github.com/poenneby/practical-clojure.git
+cd practical-clojure
 git checkout solution
-cd practical-clojure/monumental
-lein run server
+cd monumental
+lein ring server
 ```
 
 ## Generate a project
@@ -58,6 +59,7 @@ The Reagent project conveniently provide a [Leiningen template](https://github.c
 The project provides all the basic needs of a front end project such as routing and live reloading of JS and CSS.
 
 ```
+> cd monumental-front
 > tree
 .
 ├── LICENSE
@@ -125,7 +127,7 @@ Open up `src/cljs/monumental_front/core.cljs`
 
 Starting from the bottom of the file we see the `init!` function that setup the basic routing and page navigation before mounting the root component in `mount-root`.
 
-For **React** developers the code should be pretty familiar:
+For **React** developers the code below should be pretty familiar:
 
 ```clojure
 (defn mount-root []
@@ -142,11 +144,11 @@ Working our way up in the file we find a function `page-for` translating routes 
 
 The var quote form `#'home-page` is short for `(var home-page)` which expands into the fully qualified function name `monumental-front.core/home-page`
 
-Further up we have some pages declared as functions using **Hiccup**. All the provided pages return a function which is optional.
-You could just return a vector directly and this would translate to the `render` function of a React component.
+Further up we have some pages declared as functions using **Hiccup**. All the declared pages return a function and this is optional.
+You could just return a vector directly and this would translate to the `render` function of a React class.
 However if you want to do stuff like setting up initial state or fetching data prior to rendering the component you do that in the top level function.
 
-Finally at the top we have the declaration of routes. The Reagent template is using [reitit](https://metosin.github.io/reitit/) which claims to be a [faster](https://metosin.github.io/reitit/performance.html) routing library for Clojure(Script).
+Finally at the top we have the declaration of routes. The Reagent template is using [reitit](https://metosin.github.io/reitit/) which claims to be a very [fast](https://metosin.github.io/reitit/performance.html) routing library for Clojure(Script).
 
 An added advantage is that routes can be shared between server and client.
 
@@ -179,11 +181,26 @@ In the `home-page` page component we remove the "borken link", the link to "item
      [:h1 "Monumental"]]))
 ```
 
-You can also remove the "item-page" and "items-page" along with their references in the routes.
+You can also remove the "item-page" and "items-page" along with their references in the `router` declaration.
+
+```
+(def router
+  (reitit/router
+   [["/" :index]]))
+```
 
 ## Introducing state
 
 Right at the top we see the import of `atom` - Atoms are used to [manage state](http://reagent-project.github.io/docs/master/ManagingState.html) in Reagent applications.
+
+```clojure
+(ns monumental-front.core
+    (:require [reagent.core :as reagent :refer [atom]]
+              [reagent.session :as session]
+              [reitit.frontend :as reitit]
+              [clerk.core :as clerk]
+              [accountant.core :as accountant]))
+```
 
 Declare an atom containing a map with `monuments` and the current `search`
 ```clojure
@@ -267,7 +284,7 @@ Locate the `:dependencies` key and add the following dependency at the end of th
 
 When modifying the project configuration we need to restart the REPL so quit with `Ctrl+D` and start it again with `lein figwheel`
 
-**cljs-ajax` is a simple Ajax client for ClojureScript and Clojure and it exposes different functions representing HTTP methods such as `GET` and `POST`.
+`cljs-ajax` is a simple Ajax client for ClojureScript and Clojure and it exposes different functions representing HTTP methods such as `GET` and `POST`.
 
 Let's try it out while in the REPL.
 
@@ -298,15 +315,19 @@ app:cljs.user=> (GET "http://localhost:3000/api/search" {:params {:region "P"}
            #_=>                                          :handler #(.log js/console (str %))})
 ```
 
-Verify in the navigator console and you should output similar to below:
+Verify in the navigator console and you should see an output similar to below:
 
 ```edn
 [{:AFFE "", :STAT "Propriété d'une personne privée", :REF "PA00109152" ...]
 ```
 
-Since this code is now working we'll put it in the `fetch-monuments` function but instead of logging the response we put it in the state atom.
+Since this code is now working we'll put it in the `fetch-monuments` function, but instead of logging the response we put it in the state atom.
 
 ```clojure
+;; Add the dependency in the require vector at the top of the file
+[ajax.core :refer [GET]]
+
+
 (defn fetch-monuments [region]
   (swap! state assoc :search region)
   (GET "http://localhost:3000/api/search" {:params {:region region}
@@ -334,9 +355,9 @@ We define 2 new components
                        (for [monument (:monuments @state)] (<monument-line> monument))]])
 ```
 
-The `<monuments>` component iterate over the monuments in the state atom using "for comprehension". For each monument we render a `<monument-line>`.
+The `<monuments>` component iterate over the `monuments` in the state atom using "for comprehension" - For each `monument` we render a `<monument-line>`.
 
-The `<monument-line>` component first extract variables from the `monument` and then generates a list item with a link to more info.
+The `<monument-line>` component first extract variables from the `monument` and then generate a list item with a link to more info.
 
 We then reference the `<monuments>` component from the home page component
 
@@ -406,7 +427,7 @@ To make things a little more interesting we can display a photo of the monument.
 
 ```clojure
 
-;; Add the "lower-case" function in the require vector
+;; Add the "lower-case" function dependency in the require vector at the top of the file
 [clojure.string :refer [lower-case]]
 
 
